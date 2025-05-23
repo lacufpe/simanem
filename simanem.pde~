@@ -1,0 +1,213 @@
+
+RegFile regfile;
+Register regA,regB,ulaOut;
+int AdrA,AdrB,func;
+Ula ULA;
+
+class Ula{
+  int posX,posY;
+  int a,b, out;
+  int Z,C,Ov;
+  String funcao;
+  
+  Ula(int iposX, int iposY){
+    posX=iposX;
+    posY = iposY;
+  }
+  
+  void display(){
+    fill(255);
+    beginShape();
+      vertex(posX+00, posY+0);
+      vertex(posX+40, posY+25);
+      vertex(posX+40, posY+55);
+      vertex(posX+00, posY+80);
+      vertex(posX+00, posY+50);
+      vertex(posX+10, posY+40);
+      vertex(posX+00, posY+30);
+    endShape(CLOSE);
+    fill(0);
+    textAlign(LEFT);
+    text(funcao,posX+12,posY+46);
+    fill((1-Z)*255);
+    text('Z',posX+0,posY+92);
+    fill((1-C)*255);
+    text('C',posX+12,posY+92);
+    fill((1-Ov)*255);
+    text("Ov",posX+24,posY+92);
+  }
+    
+  void exec(int func,int shamt){
+    switch (func){
+     case 0X02:
+     funcao = "ADD";
+     out = a+b;
+     break;
+     case 0X06:
+     funcao = "SUB";
+     out = a-b;
+     break;
+     case 0x01:
+     funcao = "OR";
+     out = a | b;
+     break;
+     case 0x00:
+     funcao = "AND";
+     out = a & b;
+     break;
+     case 0x0F:
+     funcao = "XOR";
+     out = a ^ b;
+     break;
+     case 0x0C:
+     funcao = "NOR";
+     out = ~(a|b);
+     break;
+     case 0x07:
+     funcao = "SLT";
+     out = a<b?1:0;
+     break;
+     case 0x12:
+     funcao = "SHL";
+     out = a << shamt;
+     break;
+     case 0x11:
+     funcao= "SHR";
+     out = a >> shamt;
+     break;
+     case 0x10:
+     funcao = "SAR";
+     out = a/(1<<shamt);
+     break;
+     case 0x18:
+     funcao = "ROL";
+     out =(a/(1<<shamt))|(a <<shamt);
+     break;
+     case 0x14:
+     funcao = "ROR";
+     out = (a%(1<<shamt)<<(16-shamt))|(a >> shamt);
+     break;
+     default:
+     funcao = "OFF";
+     out =0;
+    }
+    C = out/0x10000;
+    Z = out==0?1:0;
+    out = out%0x10000;
+    if (((a/0x8000) == (b/0x8000)) && !((a/0x8000) == (out/0x8000))){
+      Ov = 1;
+    } else {
+      Ov = 0;
+    }
+  }
+}
+
+class Register{
+  int posX,posY;
+  int value = 0;
+  String name;
+  
+  Register(String iName,int iposX, int iposY){
+    name = iName;
+    posX = iposX;
+    posY = iposY;
+  }
+  
+  void display(){
+    textAlign(CENTER);
+    fill(210);
+    rect(posX,posY,80,12);
+    fill(0);
+    text(name,posX+40,posY+12-1);
+    fill(255);
+    rect(posX,posY+12,80,12);
+    fill(0);
+    text(hex(value,4),posX+40,posY+24-1);
+  }
+}
+
+class RegFile{
+  int nReg = 16;
+  int[] regs;
+  int posX,posY;
+
+  RegFile(int inReg,int iposX,int iposY){
+    nReg = inReg;
+    regs = new int[nReg];
+    posX = iposX;
+    posY = iposY;
+  }
+  
+  void display(){
+    textAlign(CENTER);
+    fill(210);
+    rect(posX,posY,100,12);
+    fill(0);
+    text("banco de reg.",posX+50,posY+12-1);
+    for(int i = 0; i<nReg; i++){
+      fill(255);
+      rect(posX,12*(i+1)+posY,100,12);
+      fill(0);
+      text(i,posX+10,12*(i+2)+posY-1);
+      text(hex(regs[i],4),posX+60,12*(i+2)+posY-1);
+    }
+    line(posX+20,posY+12,posX+20,posY+(nReg+1)*12);
+  }
+  void write(int reg,int valor){
+    if (!(reg == 0)){
+      regs[reg] = valor;
+    }
+  }
+  int read(int reg){
+    return regs[reg];
+  }
+}
+
+void setup(){
+  background(255);
+  size(600,300);
+  regfile = new RegFile(16,30,70);
+  for (int i = 1; i<16; i++){
+    regfile.write(i,floor(random(0x10000)));
+  }
+  regA = new Register("A OUT",200,70);
+  regB = new Register("B OUT",200,240);
+  ULA = new Ula(320,130);
+  ulaOut = new Register("ULA out",380,150);
+//  regfile.display();
+//  noLoop();
+}
+
+void draw(){
+  background(255);
+  fill(0);
+  rect(0,0,40,40);
+  textAlign(CENTER);
+  fill(255);
+  text("CK",20,26);
+  regfile.display();
+  regA.value = regfile.read(AdrA);
+  regB.value = regfile.read(AdrB);
+  regA.display();
+  regB.display();
+  line(regfile.posX+100,regfile.posY+6+12*(AdrA+1),regA.posX,regA.posY+12+6);
+  line(regfile.posX+100,regfile.posY+6+12*(AdrB+1),regB.posX,regB.posY+12+6);
+  line(regA.posX+80,regA.posY+12+6,ULA.posX,ULA.posY+15);
+  line(regB.posX+80,regB.posY+12+6,ULA.posX,ULA.posY+65);
+  ULA.a = regA.value;
+  ULA.b = regB.value;
+  ULA.exec(func,0);
+  ulaOut.value = ULA.out;
+  ULA.display();
+  ulaOut.display();
+}
+
+void mousePressed(){
+  if ((mouseX < 40) && (mouseY < 40)){
+    AdrA = floor(random(16));
+    AdrB = floor(random(16));
+    func = floor(random(32));
+  }
+}
+
+

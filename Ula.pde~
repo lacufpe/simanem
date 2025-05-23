@@ -1,0 +1,99 @@
+/*Classe ULA do ANEM */
+
+class Ula{
+  int posX,posY;
+  int a,b, out;
+  int Z,C,Ov;
+  String funcao;
+  
+  Ula(int iposX, int iposY){
+    posX=iposX;
+    posY = iposY;
+  }
+  
+  void display(){
+    fill(255);
+    beginShape();
+      vertex(posX+00, posY+0);
+      vertex(posX+40, posY+25);
+      vertex(posX+40, posY+55);
+      vertex(posX+00, posY+80);
+      vertex(posX+00, posY+50);
+      vertex(posX+10, posY+40);
+      vertex(posX+00, posY+30);
+    endShape(CLOSE);
+    fill(0);
+    textAlign(LEFT);
+    text(funcao,posX+12,posY+46);
+    fill((1-Z)*255);
+    text('Z',posX+0,posY+92);
+    fill((1-C)*255);
+    text('C',posX+12,posY+92);
+    fill((1-Ov)*255);
+    text("Ov",posX+24,posY+92);
+  }
+    
+  void exec(int func,int shamt){
+    switch (func){
+     case 0X02:
+     funcao = "ADD";
+     out = a+b;
+     break;
+     case 0X06:
+     funcao = "SUB";
+     out = a-b;
+     break;
+     case 0x01:
+     funcao = "OR";
+     out = a | b;
+     break;
+     case 0x00:
+     funcao = "AND";
+     out = a & b;
+     break;
+     case 0x0F:
+     funcao = "XOR";
+     out = a ^ b;
+     break;
+     case 0x0C:
+     funcao = "NOR";
+     out = ~(a|b);
+     break;
+     case 0x07:
+     funcao = "SLT";
+     out = a<b?1:0;
+     break;
+     case 0x12:
+     funcao = "SHL";
+     out = a << shamt;
+     break;
+     case 0x11:
+     funcao= "SHR";
+     out = a >> shamt;
+     break;
+     case 0x10:
+     funcao = "SAR";
+     out = a/(1<<shamt);
+     break;
+     case 0x18:
+     funcao = "ROL";
+     out =(a/(1<<shamt))|(a <<shamt);
+     break;
+     case 0x14:
+     funcao = "ROR";
+     out = (a%(1<<shamt)<<(16-shamt))|(a >> shamt);
+     break;
+     default:
+     funcao = "OFF";
+     out =0;
+    }
+    C = out/0x10000;
+    Z = out==0?1:0;
+    out = out%0x10000;
+    if (((a/0x8000) == (b/0x8000)) && !((a/0x8000) == (out/0x8000))){
+      Ov = 1;
+    } else {
+      Ov = 0;
+    }
+  }
+}

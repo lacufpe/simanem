@@ -1,0 +1,3 @@
+Simulação do ANEM16 feita em Processing.
+
+Cada módulo é um objeto.
